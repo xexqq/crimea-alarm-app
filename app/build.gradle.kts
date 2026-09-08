@@ -1,6 +1,6 @@
 plugins {
-    id("org.jetbrains.kotlin.android")
     id("com.android.application")
+    id("org.jetbrains.kotlin.android")
     id("com.google.devtools.ksp") version "1.9.20-1.0.14"
 }
 
@@ -14,6 +14,8 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
+    }
+
     signingConfigs {
         create("release") {
             storeFile = file("release-key.jks")
