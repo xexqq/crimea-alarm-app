@@ -1,0 +1,28 @@
+package com.xexqq.crimeaalarm
+
+import android.content.Context
+import androidx.room.Database
+import androidx.room.Room
+import androidx.room.RoomDatabase
+
+@Database(entities = [AlertEntity::class], version = 1)
+abstract class AppDatabase : RoomDatabase() {
+    abstract fun alertDao(): AlertDao
+
+    companion object {
+        @Volatile
+        private var INSTANCE: AppDatabase? = null
+
+        fun getDatabase(context: Context): AppDatabase {
+            return INSTANCE ?: synchronized(this) {
+                val instance = Room.databaseBuilder(
+                    context.applicationContext,
+                    AppDatabase::class.java,
+                    "crimea_alarm_db"
+                ).build()
+                INSTANCE = instance
+                instance
+            }
+        }
+    }
+}
