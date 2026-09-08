@@ -14,6 +14,14 @@ class MainActivity : AppCompatActivity() {
     private lateinit var adapter: AlertAdapter
     private lateinit var db: AppDatabase
 
+    private val handler = android.os.Handler(android.os.Looper.getMainLooper())
+    private val refreshRunnable = object : Runnable {
+        override fun run() {
+            refreshFromChannel()
+            handler.postDelayed(this, 30_000) // повтор каждые 30 секунд
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -27,7 +35,16 @@ class MainActivity : AppCompatActivity() {
         recyclerView.adapter = adapter
 
         loadFromDatabase()
-        refreshFromChannel()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        handler.post(refreshRunnable)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        handler.removeCallbacks(refreshRunnable)
     }
 
     private fun loadFromDatabase() {
