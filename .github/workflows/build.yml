@@ -20,6 +20,13 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
+      - name: Generate signing key
+        run: |
+          keytool -genkeypair -v -keystore app/release-key.jks \
+            -alias release -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass android123 -keypass android123 \
+            -dname "CN=CrimeaAlarm, OU=Dev, O=xexqq, L=Simferopol, S=Crimea, C=RU"
+
       - name: Build APK
         run: ./gradlew assembleRelease
 
@@ -27,4 +34,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: app-release
-          path: app/build/outputs/apk/release/app-release-unsigned.apk
+          path: app/build/outputs/apk/release/app-release.apk

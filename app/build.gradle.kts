@@ -14,11 +14,19 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
+    signingConfigs {
+        create("release") {
+            storeFile = file("release-key.jks")
+            storePassword = "android123"
+            keyAlias = "release"
+            keyPassword = "android123"
+        }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 
