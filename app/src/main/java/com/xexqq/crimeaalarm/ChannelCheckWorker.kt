@@ -26,7 +26,7 @@ class ChannelCheckWorker(context: Context, params: WorkerParameters) :
                 val threatNames = parsed.threatKeys.mapNotNull { DataLoader.threats[it]?.name }
                 val threatText = threatNames.joinToString(", ")
                 val cityText = if (parsed.cities.isNotEmpty()) parsed.cities.joinToString(", ") else "Весь Крым"
-                val placesText = parsed.places.joinToString(", ")
+                val placesText = parsed.places.filter { it !in parsed.cities }.distinct().joinToString(", ")
 
                 db.alertDao().insert(
                     AlertEntity(
