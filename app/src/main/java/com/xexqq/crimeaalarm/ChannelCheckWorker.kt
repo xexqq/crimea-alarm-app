@@ -28,18 +28,22 @@ class ChannelCheckWorker(context: Context, params: WorkerParameters) :
                 val cityText = if (parsed.cities.isNotEmpty()) parsed.cities.joinToString(", ") else "Весь Крым"
                 val placesText = parsed.places.filter { it !in parsed.cities }.distinct().joinToString(", ")
 
-                db.alertDao().insert(
-                    AlertEntity(
-                        postId = id,
-                        city = cityText,
-                        places = placesText,
-                        threatText = threatText,
-                        level = parsed.level,
-                        lat = 0.0,
-                        lon = 0.0,
-                        postTime = java.text.SimpleDateFormat("HH:mm dd.MM").format(java.util.Date())
-                    )
-                )
+                val coordKey = parsed.places.firstOrNull()?.lowercase()
+                            ?: parsed.cities.firstOrNull()?.lowercase()
+                        val coordPair = coordKey?.let { DataLoader.coords[it] } ?: Pair(45.0, 34.5)
+
+                        db.alertDao().insert(
+                            AlertEntity(
+                                postId = id,
+                                city = cityText,
+                                places = placesText,
+                                threatText = threatText,
+                                level = parsed.level,
+                                lat = coordPair.first,
+                                lon = coordPair.second,
+                                postTime = java.text.SimpleDateFormat("HH:mm dd.MM").format(java.util.Date())
+                            )
+                        )
 
                 sendNotification(cityText, placesText, threatText, parsed.level)
             }

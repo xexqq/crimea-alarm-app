@@ -9,6 +9,7 @@ object DataLoader {
 
     lateinit var locations: Map<String, String>
     lateinit var threats: Map<String, ThreatInfo>
+    lateinit var coords: Map<String, Pair<Double, Double>>
     lateinit var sortedLocationKeys: List<String>
     lateinit var sortedThreatKeys: List<String>
 
@@ -31,5 +32,14 @@ object DataLoader {
         }
         threats = threatMap
         sortedThreatKeys = threatMap.keys.sortedByDescending { it.length }
+
+        val coordsJson = context.assets.open("coords.json").bufferedReader().use { it.readText() }
+        val coordsObj = JSONObject(coordsJson)
+        val coordsMap = mutableMapOf<String, Pair<Double, Double>>()
+        coordsObj.keys().forEach { key ->
+            val arr = coordsObj.getJSONArray(key)
+            coordsMap[key] = Pair(arr.getDouble(0), arr.getDouble(1))
+        }
+        coords = coordsMap
     }
 }

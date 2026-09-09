@@ -74,6 +74,10 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
                         val cityText = if (parsed.cities.isNotEmpty()) parsed.cities.joinToString(", ") else "Весь Крым"
                         val placesText = parsed.places.filter { it !in parsed.cities }.distinct().joinToString(", ")
 
+                        val coordKey = parsed.places.firstOrNull()?.lowercase()
+                            ?: parsed.cities.firstOrNull()?.lowercase()
+                        val coordPair = coordKey?.let { DataLoader.coords[it] } ?: Pair(45.0, 34.5)
+
                         db.alertDao().insert(
                             AlertEntity(
                                 postId = id,
@@ -81,8 +85,8 @@ class FeedFragment : Fragment(R.layout.fragment_feed) {
                                 places = placesText,
                                 threatText = threatText,
                                 level = parsed.level,
-                                lat = 0.0,
-                                lon = 0.0,
+                                lat = coordPair.first,
+                                lon = coordPair.second,
                                 postTime = java.text.SimpleDateFormat("HH:mm dd.MM").format(java.util.Date())
                             )
                         )
