@@ -8,6 +8,13 @@ import androidx.recyclerview.widget.RecyclerView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
+import java.util.concurrent.TimeUnit
 
 class MainActivity : AppCompatActivity() {
 
@@ -35,6 +42,31 @@ class MainActivity : AppCompatActivity() {
         recyclerView.adapter = adapter
 
         loadFromDatabase()
+        requestNotificationPermission()
+        scheduleBackgroundWork()
+    }
+
+    private fun requestNotificationPermission() {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED
+            ) {
+                ActivityCompat.requestPermissions(
+                    this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1
+                )
+            }
+        }
+    }
+
+    private fun scheduleBackgroundWork() {
+        val request = PeriodicWorkRequestBuilder<ChannelCheckWorker>(15, TimeUnit.MINUTES)
+            .build()
+
+        WorkManager.getInstance(applicationContext).enqueueUniquePeriodicWork(
+            "channel_check",
+            androidx.work.ExistingPeriodicWorkPolicy.KEEP,
+            request
+        )
     }
 
     override fun onResume() {
