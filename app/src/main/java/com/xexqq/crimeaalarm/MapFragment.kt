@@ -54,6 +54,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <style>
   html, body, #map { height: 100%; margin: 0; padding: 0; background: transparent; }
+  .dark-tiles { filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.9); }
 </style>
 </head>
 <body>
@@ -76,11 +77,12 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     "Спутник": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
       attribution: 'Esri', maxZoom: 19
     }),
-    "Тёмная": L.tileLayer('https://cartodb-basemaps-a.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png', {
-      attribution: '© CARTO', maxZoom: 19
+    "Светлая": L.tileLayer('https://tiles.wmflabs.org/bw-mapnik/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap', maxZoom: 18
     }),
-    "Светлая": L.tileLayer('https://cartodb-basemaps-a.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png', {
-      attribution: '© CARTO', maxZoom: 19
+    "Тёмная": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap', maxZoom: 19, subdomains: 'abc',
+      className: 'dark-tiles'
     })
   };
 
