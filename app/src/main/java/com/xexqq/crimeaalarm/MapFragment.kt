@@ -71,16 +71,16 @@ class MapFragment : Fragment(R.layout.fragment_map) {
 
   var baseLayers = {
     "Обычная": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap', maxZoom: 18
+      attribution: '© OpenStreetMap', maxZoom: 19, subdomains: 'abc'
     }),
     "Спутник": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-      attribution: 'Esri', maxZoom: 18
+      attribution: 'Esri', maxZoom: 19
     }),
-    "Тёмная": L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', {
-      attribution: '© CARTO', maxZoom: 18
+    "Тёмная": L.tileLayer('https://cartodb-basemaps-a.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png', {
+      attribution: '© CARTO', maxZoom: 19
     }),
-    "Светлая": L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
-      attribution: '© CARTO', maxZoom: 18
+    "Светлая": L.tileLayer('https://cartodb-basemaps-a.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png', {
+      attribution: '© CARTO', maxZoom: 19
     })
   };
 
