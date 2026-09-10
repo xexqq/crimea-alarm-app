@@ -29,33 +29,21 @@ class ChannelCheckWorker(context: Context, params: WorkerParameters) :
                 val placesText = parsed.places.filter { it !in parsed.cities }.distinct().joinToString(", ")
 
                 val coordKey = parsed.places.firstOrNull()?.lowercase()
-                            ?: parsed.cities.firstOrNull()?.lowercase()
-                        val coordPair = coordKey?.let { DataLoader.coords[it] } ?: Pair(45.0, 34.5)
+                    ?: parsed.cities.firstOrNull()?.lowercase()
+                val coordPair = coordKey?.let { DataLoader.coords[it] } ?: Pair(45.0, 34.5)
 
-                        db.alertDao().insert(
-                            AlertEntity(
-                                postId = id,
-                                city = cityText,
-                                places = placesText,
-                                threatText = threatText,
-                                level = parsed.level,
-                                lat = coordPair.first,
-                                lon = coordPair.second,
-                                postTime = java.text.SimpleDateFormat("HH:mm dd.MM").format(java.util.Date())
-                            )
-                        )
-
-        private fun shouldNotify(postCities: Set<String>): Boolean {
-        val selected = PrefsManager.getSelectedCities(applicationContext)
-
-        if (selected.isEmpty()) return true // ничего не настроено - шлём всё
-
-        if (selected.contains("Весь Крым")) return true
-
-        if (postCities.isEmpty()) return false // пост без города, а "Весь Крым" не выбран
-
-        return postCities.any { it in selected }
-    }
+                db.alertDao().insert(
+                    AlertEntity(
+                        postId = id,
+                        city = cityText,
+                        places = placesText,
+                        threatText = threatText,
+                        level = parsed.level,
+                        lat = coordPair.first,
+                        lon = coordPair.second,
+                        postTime = java.text.SimpleDateFormat("HH:mm dd.MM").format(java.util.Date())
+                    )
+                )
 
                 if (shouldNotify(parsed.cities)) {
                     sendNotification(cityText, placesText, threatText, parsed.level)
@@ -67,6 +55,16 @@ class ChannelCheckWorker(context: Context, params: WorkerParameters) :
             e.printStackTrace()
             Result.retry()
         }
+    }
+
+    private fun shouldNotify(postCities: Set<String>): Boolean {
+        val selected = PrefsManager.getSelectedCities(applicationContext)
+
+        if (selected.isEmpty()) return true
+        if (selected.contains("Весь Крым")) return true
+        if (postCities.isEmpty()) return false
+
+        return postCities.any { it in selected }
     }
 
     private fun sendNotification(city: String, places: String, threatText: String, level: String) {
