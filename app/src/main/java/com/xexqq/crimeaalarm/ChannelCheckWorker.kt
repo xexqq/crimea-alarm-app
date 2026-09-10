@@ -45,7 +45,21 @@ class ChannelCheckWorker(context: Context, params: WorkerParameters) :
                             )
                         )
 
-                sendNotification(cityText, placesText, threatText, parsed.level)
+        private fun shouldNotify(postCities: Set<String>): Boolean {
+        val selected = PrefsManager.getSelectedCities(applicationContext)
+
+        if (selected.isEmpty()) return true // ничего не настроено - шлём всё
+
+        if (selected.contains("Весь Крым")) return true
+
+        if (postCities.isEmpty()) return false // пост без города, а "Весь Крым" не выбран
+
+        return postCities.any { it in selected }
+    }
+
+                if (shouldNotify(parsed.cities)) {
+                    sendNotification(cityText, placesText, threatText, parsed.level)
+                }
             }
 
             Result.success()
