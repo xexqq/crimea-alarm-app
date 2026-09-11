@@ -70,13 +70,14 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     bounceAtZoomLimits: false
   });
 
+  map.fitBounds(bounds);
+
   map.whenReady(function() {
     setTimeout(function() {
       map.invalidateSize();
       var exactMinZoom = map.getBoundsZoom(bounds, false);
       map.setMinZoom(exactMinZoom);
-      map.fitBounds(bounds);
-    }, 100);
+    }, 300);
   });
 
   map.on('zoomend', function() {
@@ -89,12 +90,10 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     map.panInsideBounds(bounds, { animate: false });
   });
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap',
     maxZoom: 19,
-    subdomains: 'abc',
-    bounds: bounds,
-    noWrap: true
+    subdomains: 'abc'
   }).addTo(map);
 
   baseLayers["Обычная"].addTo(map);
