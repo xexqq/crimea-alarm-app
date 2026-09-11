@@ -64,10 +64,12 @@ class MapFragment : Fragment(R.layout.fragment_map) {
 
   var map = L.map('map', {
     maxBounds: bounds,
-    maxBoundsViscosity: 1.0,
-    minZoom: 8
+    maxBoundsViscosity: 1.0
   });
   map.fitBounds(bounds);
+
+  var exactMinZoom = map.getBoundsZoom(bounds, true);
+  map.setMinZoom(exactMinZoom);
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap', maxZoom: 19, subdomains: 'abc'
