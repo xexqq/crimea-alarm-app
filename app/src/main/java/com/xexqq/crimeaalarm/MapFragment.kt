@@ -54,8 +54,6 @@ class MapFragment : Fragment(R.layout.fragment_map) {
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <style>
   html, body, #map { height: 100%; margin: 0; padding: 0; background: transparent; }
-  .dark-tiles { filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.9); }
-  .light-tiles { filter: grayscale(0.3) brightness(1.15) contrast(0.95); }
 </style>
 </head>
 <body>
@@ -71,22 +69,9 @@ class MapFragment : Fragment(R.layout.fragment_map) {
   });
   map.fitBounds(bounds);
 
-  var baseLayers = {
-    "Обычная": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap', maxZoom: 19, subdomains: 'abc'
-    }),
-    "Спутник": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-      attribution: 'Esri', maxZoom: 19
-    }),
-    "Светлая": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap', maxZoom: 19, subdomains: 'abc',
-      className: 'light-tiles'
-    }),
-    "Тёмная": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap', maxZoom: 19, subdomains: 'abc',
-      className: 'dark-tiles'
-    })
-  };
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap', maxZoom: 19, subdomains: 'abc'
+  }).addTo(map);
 
   baseLayers["Обычная"].addTo(map);
   L.control.layers(baseLayers).addTo(map);
