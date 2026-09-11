@@ -6,6 +6,7 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.Fragment
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
@@ -13,6 +14,12 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import java.util.concurrent.TimeUnit
 
 class MainActivity : AppCompatActivity() {
+
+    private val mapFragment = MapFragment()
+    private val feedFragment = FeedFragment()
+    private val settingsFragment = SettingsFragment()
+    private val donateFragment = DonateFragment()
+    private var activeFragment: Fragment = mapFragment
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -22,22 +29,29 @@ class MainActivity : AppCompatActivity() {
 
         if (savedInstanceState == null) {
             supportFragmentManager.beginTransaction()
-                .replace(R.id.fragmentContainer, MapFragment())
+                .add(R.id.fragmentContainer, donateFragment, "donate").hide(donateFragment)
+                .add(R.id.fragmentContainer, settingsFragment, "settings").hide(settingsFragment)
+                .add(R.id.fragmentContainer, feedFragment, "feed").hide(feedFragment)
+                .add(R.id.fragmentContainer, mapFragment, "map")
                 .commit()
         }
 
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNav)
         bottomNav.setOnItemSelectedListener { item ->
-            val fragment = when (item.itemId) {
-                R.id.nav_feed -> FeedFragment()
-                R.id.nav_map -> MapFragment()
-                R.id.nav_settings -> SettingsFragment()
-                R.id.nav_donate -> DonateFragment()
-                else -> FeedFragment()
+            val target: Fragment = when (item.itemId) {
+                R.id.nav_map -> mapFragment
+                R.id.nav_feed -> feedFragment
+                R.id.nav_settings -> settingsFragment
+                R.id.nav_donate -> donateFragment
+                else -> mapFragment
             }
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.fragmentContainer, fragment)
-                .commit()
+            if (target !== activeFragment) {
+                supportFragmentManager.beginTransaction()
+                    .hide(activeFragment)
+                    .show(target)
+                    .commit()
+                activeFragment = target
+            }
             true
         }
 
@@ -64,3 +78,4 @@ class MainActivity : AppCompatActivity() {
         )
     }
 }
+
