@@ -65,12 +65,29 @@ class MapFragment : Fragment(R.layout.fragment_map) {
   var map = L.map('map', {
     maxBounds: bounds,
     maxBoundsViscosity: 1.0,
-    zoomControl: false
+    zoomControl: false,
+    inertia: false,
+    bounceAtZoomLimits: false
   });
-  map.fitBounds(bounds, { padding: [20, 20] });
 
-  var exactMinZoom = map.getBoundsZoom(bounds, true);
-  map.setMinZoom(exactMinZoom);
+  map.whenReady(function() {
+    setTimeout(function() {
+      map.invalidateSize();
+      var exactMinZoom = map.getBoundsZoom(bounds, false);
+      map.setMinZoom(exactMinZoom);
+      map.fitBounds(bounds);
+    }, 100);
+  });
+
+  map.on('zoomend', function() {
+    if (map.getZoom() < map.getMinZoom()) {
+      map.setZoom(map.getMinZoom());
+    }
+  });
+
+  map.on('drag', function() {
+    map.panInsideBounds(bounds, { animate: false });
+  });
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap',
