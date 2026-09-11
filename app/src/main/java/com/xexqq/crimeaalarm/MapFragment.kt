@@ -53,26 +53,31 @@ class MapFragment : Fragment(R.layout.fragment_map) {
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <style>
-  html, body, #map { height: 100%; margin: 0; padding: 0; background: transparent; }
+  html, body, #map { height: 100%; margin: 0; padding: 0; background: 000000; }
 </style>
 </head>
 <body>
 <div id="map"></div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-  var bounds = [[44.0, 32.3], [46.3, 36.8]];
+  var bounds = [[43.85, 32.1], [46.5, 37.0]];
 
   var map = L.map('map', {
     maxBounds: bounds,
-    maxBoundsViscosity: 1.0
+    maxBoundsViscosity: 1.0,
+    zoomControl: false
   });
-  map.fitBounds(bounds);
+  map.fitBounds(bounds, { padding: [20, 20] });
 
   var exactMinZoom = map.getBoundsZoom(bounds, true);
   map.setMinZoom(exactMinZoom);
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap', maxZoom: 19, subdomains: 'abc'
+    attribution: '© OpenStreetMap',
+    maxZoom: 19,
+    subdomains: 'abc',
+    bounds: bounds,
+    noWrap: true
   }).addTo(map);
 
   baseLayers["Обычная"].addTo(map);
