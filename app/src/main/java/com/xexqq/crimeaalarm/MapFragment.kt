@@ -1,9 +1,7 @@
 package com.xexqq.crimeaalarm
 
-import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.View
-import android.webkit.WebView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
@@ -11,112 +9,167 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
+import org.maplibre.android.camera.CameraPosition
+import org.maplibre.android.geometry.LatLng
+import org.maplibre.android.geometry.LatLngBounds
+import org.maplibre.android.maps.MapView
+import org.maplibre.android.maps.MapLibreMap
+import org.maplibre.android.style.sources.GeoJsonSource
+import org.maplibre.android.style.layers.CircleLayer
+import org.maplibre.android.style.layers.PropertyFactory.*
+import org.maplibre.android.style.expressions.Expression.*
 
 class MapFragment : Fragment(R.layout.fragment_map) {
 
-    @SuppressLint("SetJavaScriptEnabled")
+    private lateinit var mapView: MapView
+    private var maplibreMap: MapLibreMap? = null
+
+    private val southwest = LatLng(44.0, 32.3)
+    private val northeast = LatLng(46.3, 36.8)
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val webView = view.findViewById<WebView>(R.id.mapWebView)
-        webView.settings.javaScriptEnabled = true
-        webView.setBackgroundColor(0)
+        mapView = view.findViewById(R.id.mapView)
+        mapView.onCreate(savedInstanceState)
 
+        mapView.getMapAsync { map ->
+            maplibreMap = map
+            setupMap(map)
+        }
+    }
+
+    private fun setupMap(map: MapLibreMap) {
+        val mbtilesPath = MbtilesHelper.getMbtilesPath(requireContext())
+        val styleJson = buildStyleJson(mbtilesPath)
+
+        map.setStyle(org.maplibre.android.maps.Style.Builder().fromJson(styleJson)) { style ->
+            val bounds = LatLngBounds.from(northeast.latitude, northeast.longitude, southwest.latitude, southwest.longitude)
+            map.setLatLngBoundsForCameraTarget(bounds)
+
+            val cameraPosition = map.cameraForLatLngBounds(bounds)
+            if (cameraPosition != null) {
+                map.cameraPosition = CameraPosition.Builder(cameraPosition).build()
+                map.setMinZoomPreference(cameraPosition.zoom)
+            }
+            map.setMaxZoomPreference(14.0)
+
+            loadPoints(style)
+
+            map.addOnMapClickListener { point ->
+                val screenPoint = map.projection.toScreenLocation(point)
+                val features = map.queryRenderedFeatures(screenPoint, "points-layer")
+                if (features.isNotEmpty()) {
+                    val feature = features[0]
+                    val city = feature.getStringProperty("city")
+                    val places = feature.getStringProperty("places")
+                    val threatText = feature.getStringProperty("threatText")
+                    val postTime = feature.getStringProperty("postTime")
+                    showPointInfo(city, places, threatText, postTime)
+                    true
+                } else {
+                    false
+                }
+            }
+        }
+    }
+
+    private fun loadPoints(style: org.maplibre.android.maps.Style) {
         lifecycleScope.launch {
             val db = AppDatabase.getDatabase(requireContext())
             val alerts = withContext(Dispatchers.IO) { db.alertDao().getRecent() }
 
-            val pointsJson = JSONArray()
+            val features = JSONArray()
             for (alert in alerts) {
-                val obj = JSONObject()
-                obj.put("city", alert.city)
-                obj.put("places", alert.places)
-                obj.put("threatText", alert.threatText)
-                obj.put("level", alert.level)
-                obj.put("lat", alert.lat)
-                obj.put("lon", alert.lon)
-                obj.put("postTime", alert.postTime)
-                pointsJson.put(obj)
+                val feature = JSONObject()
+                feature.put("type", "Feature")
+                val geometry = JSONObject()
+                geometry.put("type", "Point")
+                geometry.put("coordinates", JSONArray().put(alert.lon).put(alert.lat))
+                feature.put("geometry", geometry)
+                val props = JSONObject()
+                props.put("city", alert.city)
+                props.put("places", alert.places)
+                props.put("threatText", alert.threatText)
+                props.put("level", alert.level)
+                props.put("postTime", alert.postTime)
+                feature.put("properties", props)
+                features.put(feature)
             }
 
-            val html = buildMapHtml(pointsJson.toString())
-            webView.loadDataWithBaseURL("https://appassets.local/", html, "text/html", "UTF-8", null)
+            val collection = JSONObject()
+            collection.put("type", "FeatureCollection")
+            collection.put("features", features)
+
+            val source = GeoJsonSource("points-source", collection.toString())
+            style.addSource(source)
+
+            val layer = CircleLayer("points-layer", "points-source")
+            layer.setProperties(
+                circleRadius(9f),
+                circleColor(
+                    match(
+                        get("level"),
+                        literal("#888888"),
+                        stop("угроза", literal("#e53935")),
+                        stop("возможная", literal("#fb8c00")),
+                        stop("отбой", literal("#43a047"))
+                    )
+                ),
+                circleStrokeColor("#000000"),
+                circleStrokeWidth(1.5f)
+            )
+            style.addLayer(layer)
         }
     }
 
-    private fun buildMapHtml(pointsJson: String): String {
-        return """
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<style>
-  html, body, #map { height: 100%; margin: 0; padding: 0; background: 000000; }
-</style>
-</head>
-<body>
-<div id="map"></div>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
-  var bounds = [[43.85, 32.1], [46.5, 37.0]];
-
-  var map = L.map('map', {
-    maxBounds: bounds,
-    maxBoundsViscosity: 1.0,
-    zoomControl: false,
-    inertia: false,
-    bounceAtZoomLimits: false
-  });
-
-  map.fitBounds(bounds);
-
-  map.whenReady(function() {
-    setTimeout(function() {
-      map.invalidateSize();
-      var exactMinZoom = map.getBoundsZoom(bounds, false);
-      map.setMinZoom(exactMinZoom);
-    }, 300);
-  });
-
-  map.on('zoomend', function() {
-    if (map.getZoom() < map.getMinZoom()) {
-      map.setZoom(map.getMinZoom());
+    private fun showPointInfo(city: String, places: String, threatText: String, postTime: String) {
+        val title = if (places.isNotEmpty()) "$city ($places)" else city
+        android.app.AlertDialog.Builder(requireContext())
+            .setTitle(title)
+            .setMessage("$threatText\n\nВремя: $postTime")
+            .setPositiveButton("Закрыть", null)
+            .show()
     }
-  });
 
-  map.on('drag', function() {
-    map.panInsideBounds(bounds, { animate: false });
-  });
-
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap',
-    maxZoom: 19,
-    subdomains: 'abc'
-  }).addTo(map);
-
-  baseLayers["Обычная"].addTo(map);
-  L.control.layers(baseLayers).addTo(map);
-
-  var iconColors = { "угроза": "red", "возможная": "orange", "отбой": "green" };
-
-  var points = $pointsJson;
-  points.forEach(function(p) {
-    var color = iconColors[p.level] || "gray";
-    var marker = L.circleMarker([p.lat, p.lon], {
-      radius: 10, fillColor: color, color: "#000", weight: 1, fillOpacity: 0.85
-    }).addTo(map);
-    marker.bindPopup(
-      "<b>" + p.city + "</b><br>" +
-      (p.places ? "Место: " + p.places + "<br>" : "") +
-      "Угроза: " + p.threatText + "<br>" +
-      "Время: " + p.postTime
-    );
-  });
-</script>
-</body>
-</html>
+    private fun buildStyleJson(mbtilesPath: String): String {
+        return """
+        {
+          "version": 8,
+          "sources": {
+            "crimea-raster": {
+              "type": "raster",
+              "url": "mbtiles://$mbtilesPath",
+              "tileSize": 256
+            }
+          },
+          "layers": [
+            {
+              "id": "background",
+              "type": "background",
+              "paint": { "background-color": "#000000" }
+            },
+            {
+              "id": "crimea-layer",
+              "type": "raster",
+              "source": "crimea-raster"
+            }
+          ]
+        }
         """.trimIndent()
+    }
+
+    override fun onStart() { super.onStart(); mapView.onStart() }
+    override fun onResume() { super.onResume(); mapView.onResume() }
+    override fun onPause() { super.onPause(); mapView.onPause() }
+    override fun onStop() { super.onStop(); mapView.onStop() }
+    override fun onDestroyView() {
+        super.onDestroyView()
+        mapView.onDestroy()
+    }
+    override fun onLowMemory() { super.onLowMemory(); mapView.onLowMemory() }
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        mapView.onSaveInstanceState(outState)
     }
 }

@@ -26,6 +26,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         DataLoader.load(applicationContext)
+        org.maplibre.android.MapLibre.getInstance(applicationContext)
 
         if (savedInstanceState == null) {
             supportFragmentManager.beginTransaction()
