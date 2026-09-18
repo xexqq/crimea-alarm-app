@@ -47,11 +47,8 @@ class MapFragment : Fragment(R.layout.fragment_map) {
             val bounds = LatLngBounds.from(northeast.latitude, northeast.longitude, southwest.latitude, southwest.longitude)
             map.setLatLngBoundsForCameraTarget(bounds)
 
-            val cameraPosition = map.cameraForLatLngBounds(bounds)
-            if (cameraPosition != null) {
-                map.cameraPosition = CameraPosition.Builder(cameraPosition).build()
-                map.setMinZoomPreference(cameraPosition.zoom)
-            }
+            map.moveCamera(org.maplibre.android.camera.CameraUpdateFactory.newLatLngBounds(bounds, 0))
+            map.setMinZoomPreference(map.cameraPosition.zoom)
             map.setMaxZoomPreference(14.0)
 
             loadPoints(style)
