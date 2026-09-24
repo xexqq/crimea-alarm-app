@@ -24,8 +24,8 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     private lateinit var mapView: MapView
     private var maplibreMap: MapLibreMap? = null
 
-    private val southwest = LatLng(44.0, 32.3)
-    private val northeast = LatLng(46.3, 36.8)
+    private val southwest = LatLng(44.35, 32.45)
+    private val northeast = LatLng(45.95, 36.65)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -35,12 +35,20 @@ class MapFragment : Fragment(R.layout.fragment_map) {
 
         mapView.getMapAsync { map ->
             maplibreMap = map
-            setupMap(map)
+            map.uiSettings.isLogoEnabled = false
+            map.uiSettings.isAttributionEnabled = false
+            map.uiSettings.isCompassEnabled = false
+
+            lifecycleScope.launch {
+                val mbtilesPath = withContext(Dispatchers.IO) {
+                    MbtilesHelper.getMbtilesPath(requireContext())
+                }
+                setupMap(map, mbtilesPath)
+            }
         }
     }
 
-    private fun setupMap(map: MapLibreMap) {
-        val mbtilesPath = MbtilesHelper.getMbtilesPath(requireContext())
+    private fun setupMap(map: MapLibreMap, mbtilesPath: String) {
         val styleJson = buildStyleJson(mbtilesPath)
 
         map.setStyle(org.maplibre.android.maps.Style.Builder().fromJson(styleJson)) { style ->
@@ -50,6 +58,13 @@ class MapFragment : Fragment(R.layout.fragment_map) {
             map.moveCamera(org.maplibre.android.camera.CameraUpdateFactory.newLatLngBounds(bounds, 0))
             map.setMinZoomPreference(map.cameraPosition.zoom)
             map.setMaxZoomPreference(14.0)
+
+            for (delay in listOf(150L, 400L, 800L, 1500L)) {
+                mapView.postDelayed({
+                    mapView.invalidate()
+                    map.triggerRepaint()
+                }, delay)
+            }
 
             loadPoints(style)
 
