@@ -24,8 +24,8 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     private lateinit var mapView: MapView
     private var maplibreMap: MapLibreMap? = null
 
-    private val southwest = LatLng(44.35, 32.45)
-    private val northeast = LatLng(45.95, 36.65)
+    private val southwest = LatLng(44.38, 32.45)
+    private val northeast = LatLng(45.85, 36.58)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
